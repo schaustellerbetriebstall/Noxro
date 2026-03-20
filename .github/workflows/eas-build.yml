@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup EAS
         uses: expo/expo-github-action@v8
@@ -25,11 +25,21 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Find app directory
+        id: appdir
+        run: |
+          if [ -f "artifacts/noxro-app/app.json" ]; then
+            echo "dir=artifacts/noxro-app" >> $GITHUB_OUTPUT
+          elif [ -f "app.json" ]; then
+            echo "dir=." >> $GITHUB_OUTPUT
+          else
+            echo "ERROR: app.json not found" && exit 1
+          fi
+
       - name: Install dependencies
-        working-directory: artifacts/noxro-app
         run: npm install
+        working-directory: ${{ steps.appdir.outputs.dir }}
 
       - name: Build iOS
-        working-directory: artifacts/noxro-app
         run: eas build --platform ios --profile preview --non-interactive
-      
+        working-directory: ${{ steps.appdir.outputs.dir }}
